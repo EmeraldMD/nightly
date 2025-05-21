@@ -1,4 +1,4 @@
-name: Issue Comment
+name: Comment on new issues
 
 on:
   issues:
@@ -8,15 +8,32 @@ jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
-      - name: Kommentar posten
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Comment on issue with @actions/github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.repository }}
         run: |
-          COMMENT="## 👋 Hallo!\n\nVielen Dank für dein Issue. Ein Maintainer wird sich das bald ansehen.\n\n> _Dies ist eine automatische Antwort._"
+          node -e "
+            const github = require('@actions/github');
+            const token = process.env.GITHUB_TOKEN;
+            const octokit = github.getOctokit(token);
+            const context = github.context;
 
-          curl -s -X POST "https://api.github.com/repos/${REPO}/issues/${ISSUE_NUMBER}/comments" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d "{\"body\": \"$COMMENT\"}"
+            const body = `# Willkommen im Nightly Support!
+
+Hier ist es normal Bugs zu finden, da die Version ständig geupdatet wird.
+Beschreibe uns das Problem und wir versuchen beim nächsten Patch den Bug zu fixen.
+
+> __Automatische Nachricht__`;
+
+            octokit.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: body
+            });
+          "
