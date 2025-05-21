@@ -1,0 +1,22 @@
+name: Issue Comment
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kommentar posten
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          COMMENT="## 👋 Hallo!\n\nVielen Dank für dein Issue. Ein Maintainer wird sich das bald ansehen.\n\n> _Dies ist eine automatische Antwort._"
+
+          curl -s -X POST "https://api.github.com/repos/${REPO}/issues/${ISSUE_NUMBER}/comments" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"body\": \"$COMMENT\"}"
